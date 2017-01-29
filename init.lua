@@ -5,15 +5,22 @@ MQTT_SERVER = ""
 MQTT_PORT = 1883
 
 -- Initialize LEDs
--- One LED lights up in START_COLOR after each of:
---   * Power on
---   * Connecting to wifi
---   * Connecting to MQTT server
---   * Subsribing to topic '/shoji'
 -- Note: Strangely ws2812 uses green-red-blue
 START_COLOR = string.char(0, 128, 0)
 ws2812.init()
 buffer = ws2812.newBuffer(12, 3)
+
+-- Indicate current step of startup
+-- One LED lights up in startcolor after each of:
+--   * Power on
+--   * Connecting to wifi
+--   * Connecting to MQTT server
+--   * Subsribing to topic
+function indicateNextStep()
+    buffer:shift(1)
+    buffer:set(1, startcolor)
+    ws2812.write(buffer)
+end
 
 -- MQTT
 -- Here without username and password: lamp is not security critical and only
@@ -24,8 +31,7 @@ m = mqtt.Client("shoji-lamp", 120)
 -- First connect to wifi
 function connectWifi()
     -- Turn on first LED
-    buffer:set(1, START_COLOR)
-    ws2812.write(buffer)
+    indicateNextStep()
 
     wifi.setmode(wifi.STATION)
     station_cfg={}
@@ -39,8 +45,7 @@ end
 wifi.eventmon.register(wifi.eventmon.STA_GOT_IP, function(T)
     -- Turn on second LED
     print("Connected to WiFi")
-    buffer:set(2, START_COLOR)
-    ws2812.write(buffer)
+    indicateNextStep()
     wifi.sta.eventMonStop(1)
     -- Start MQTT
     m:connect(MQTT_SERVER, MQTT_PORT, 0, function(client) subscribeTopic() end,
@@ -51,13 +56,11 @@ end)
 --m:on("connect", function(client)
 function subscribeTopic()
     print ("Connected to server")
-    buffer:set(3, START_COLOR)
-    ws2812.write(buffer)
+    indicateNextStep()
 
     m:subscribe("/shoji-lamp/light", 0, function(client)
         print("Subscribed successfully")
-        buffer:set(4, START_COLOR)
-        ws2812.write(buffer)
+        indicateNextStep()
     end)
 end
 
