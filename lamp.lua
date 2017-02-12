@@ -1,3 +1,5 @@
+local module = {}
+
 -- Specific config
 local clientname = "shoji-lamp"
 local topic = "/shoji-lamp/light"
@@ -14,10 +16,14 @@ local buffer = ws2812.newBuffer(12, 3)
 --   * Connecting to wifi
 --   * Connecting to MQTT server
 --   * Subsribing to topic
-function indicateNextStep()
+function module.indicateNextStep()
     buffer:shift(1)
     buffer:set(1, startcolor)
     ws2812.write(buffer)
+end
+
+function module.start()
+    connectMQTT()
 end
 
 -- MQTT
@@ -26,7 +32,7 @@ end
 local m = mqtt.Client(clientname, 120)
 
 -- Connect to MQTT server after we got an IP
-function connectMQTT()
+local function connectMQTT()
     print("Trying to connect MQTT...")
     m:connect(MQTT_SERVER, MQTT_PORT, 0, function(client) subscribeTopic() end,
                                          function(client, reason) print("failed for reason: "..reason) end)
@@ -34,7 +40,7 @@ end
 
 -- Subscribe after we connected to MQTT server
 --m:on("connect", function(client)
-function subscribeTopic()
+local function subscribeTopic()
     print ("Connected to MQTT server")
     indicateNextStep()
 
@@ -79,3 +85,5 @@ m:on("message", function(client, topic, data)
     buffer:fill(g, r, b)
     ws2812.write(buffer)
 end)
+
+return module

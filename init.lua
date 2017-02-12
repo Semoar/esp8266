@@ -1,11 +1,11 @@
 -- Config variables
 require("config")
 -- Load lamp and MQTT
-require("lamp")
+module = require("lamp")
 
 function connectWifi()
     -- Turn on first LED
-    indicateNextStep()
+    module.indicateNextStep()
 
     wifi.setmode(wifi.STATION)
     station_cfg={}
@@ -19,9 +19,9 @@ end
 wifi.eventmon.register(wifi.eventmon.STA_GOT_IP, function(T)
     -- Turn on second LED
     print("Connected to WiFi")
-    indicateNextStep()
+    module.indicateNextStep()
     wifi.sta.eventMonStop(1)
-    connectMQTT()
+    module.start()
 end)
 
 -- Start up
